@@ -75,9 +75,16 @@ print(df.groupby("region")["revenue"].sum().sort_values(ascending=False))
 
 # ── 5. BUSINESS QUESTION 1 ────────────────────────────────────
 # Which category drives the most revenue, and is it the same in every region?
-# [Your analysis code here]
-# [Your chart code here — with title, axis labels, savefig, show]
-# [Write a one-sentence finding in a comment]
+
+# Analysis code
+print("\nRevenue by category in each region")
+print(df.groupby(["region", "product_category"])["revenue"].sum().sort_values(ascending=False))
+revenue_by_category_and_region = df.groupby(["region", "product_category"])["revenue"].sum().sort_values(ascending=False)
+# Chart code
+revenue_by_category_and_region.plot(kind="bar", x=["region", "product_category"], y="revenue", title="Revenue by Category and Region")
+plt.savefig("charts/revenue_by_category_and_region.png", dpi=150, bbox_inches="tight")
+plt.show()
+# The category that drives the most revenue is electronics, which applies for every region in the dataset.
 
 # ── 6. BUSINESS QUESTION 2 ────────────────────────────────────
 # Which categories get returned most, and what do returns cost?
