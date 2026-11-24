@@ -1,0 +1,92 @@
+"""
+ISM2411 Capstone — Retail Store Sales Analysis
+Author: Van Smith
+Date:   [Submission Date]
+
+Business Questions:
+  1. Which category drives the most revenue, and is it the same in every region?
+  2. Which categories get returned most, and what do returns cost?
+  3. Do Corporate customers place bigger orders than Consumers?
+
+AI Disclosure: [What, if anything, you used AI for]
+"""
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# ── 1. LOAD ───────────────────────────────────────────────────
+DATA_FILE = "data/capstone_retail.csv"   # ← your dataset's file
+df = pd.read_csv(DATA_FILE)
+print("Raw shape:", df.shape)
+print(df.head())
+df.info()
+print(df.isnull().sum())
+
+# ── 2. CLEAN ──────────────────────────────────────────────────
+# Document every decision with a comment explaining WHY.
+
+# Standardize column names
+df.columns = df.columns.str.lower().str.replace(" ", "_")
+
+# Drop rows missing essential identifiers
+# Reason: cannot attribute revenue without an order date
+df = df.dropna(subset=["order_date"])
+
+# Parse order_date — coerce bad dates to NaT
+df["order_date"] = pd.to_datetime(df["order_date"], errors="coerce")
+
+# Fix unit_price: strip "$" and ",", convert to float
+df["unit_price"] = df["unit_price"].str.replace("$", "", regex=False)
+df["unit_price"] = df["unit_price"].str.replace(",", "", regex=False).astype(float)
+
+# Exclude returns (negative unit_price)
+# Reason: question focuses on forward sales; returns analyzed separately
+df = df[df["unit_price"] >= 0]
+
+# Remove impossible values that describe() reveals
+# Reason: a quantity of 9999 is a placeholder someone typed, not a real order
+df = df[df["quantity_sold"] != 9999]
+
+# Fill missing quantity_sold with median (low %, aggregate impact minimal)
+df["quantity_sold"] = df["quantity_sold"].fillna(df["quantity_sold"].median())
+
+# Fix category typos: case and spaces first, then the misspellings
+# that value_counts() shows
+df["product_category"] = df["product_category"].str.strip().str.title()
+df["product_category"] = df["product_category"].replace(
+    {"Electronix": "Electronics", "Furnitu Re": "Furniture"}
+)
+
+# Remove duplicates
+df = df.drop_duplicates()
+print("Clean shape:", df.shape)
+
+# ── 3. DERIVED COLUMNS ────────────────────────────────────────
+df["revenue"] = df["unit_price"] * df["quantity_sold"]
+df["month"] = df["order_date"].dt.month
+df["quarter"] = df["order_date"].dt.quarter
+
+# ── 4. DESCRIPTIVE SUMMARY ───────────────────────────────────
+print("\nDescriptive stats (clean):")
+print(df.describe())
+print("\nRevenue by region:")
+print(df.groupby("region")["revenue"].sum().sort_values(ascending=False))
+
+# ── 5. BUSINESS QUESTION 1 ────────────────────────────────────
+# Which category drives the most revenue, and is it the same in every region?
+# [Your analysis code here]
+# [Your chart code here — with title, axis labels, savefig, show]
+# [Write a one-sentence finding in a comment]
+
+# ── 6. BUSINESS QUESTION 2 ────────────────────────────────────
+# Which categories get returned most, and what do returns cost?
+# [Analysis + chart]
+
+# ── 7. BUSINESS QUESTION 3 ────────────────────────────────────
+# Do Corporate customers place bigger orders than Consumers?
+# [Analysis + chart]
+
+# ── 8. SAVE CLEAN DATA ────────────────────────────────────────
+df.to_csv("data/clean_data.csv", index=False)
+print("\nCapstone complete. Clean data saved to data/clean_data.csv")
