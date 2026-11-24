@@ -8,7 +8,7 @@ Business Questions:
   2. Which categories get returned most, and what do returns cost?
   3. Do Corporate customers place bigger orders than Consumers?
 
-AI Disclosure: [What, if anything, you used AI for]
+AI Disclosure: AI was used to look up Pandas and Matplotlib syntax for business questions. All interpretations and written reports were done by myself with no AI assistance.
 """
 
 import pandas as pd
@@ -81,7 +81,27 @@ print("\nRevenue by category in each region")
 print(df.groupby(["region", "product_category"])["revenue"].sum().sort_values(ascending=False))
 revenue_by_category_and_region = df.groupby(["region", "product_category"])["revenue"].sum().sort_values(ascending=False)
 # Chart code
-revenue_by_category_and_region.plot(kind="bar", x=["region", "product_category"], y="revenue", title="Revenue by Category and Region")
+revenue_pivot = df.pivot_table(
+    index="product_category",
+    columns="region",
+    values="revenue",
+    aggfunc="sum",
+    fill_value=0,
+)
+revenue_pivot = revenue_pivot.loc[revenue_pivot.sum(axis=1).sort_values().index]
+
+fig, ax = plt.subplots(figsize=(9, 5))
+sns.heatmap(
+    revenue_pivot,
+    annot=True,
+    fmt=",.0f",
+    cmap="Blues",
+    linewidths=0.5,
+    cbar_kws={"label": "Revenue ($)"},
+    ax=ax,
+)
+ax.set(title="Revenue by Category and Region", xlabel="Region", ylabel="Category")
+plt.tight_layout()
 plt.savefig("charts/revenue_by_category_and_region.png", dpi=150, bbox_inches="tight")
 plt.show()
 # The category that drives the most revenue is electronics, which applies for every region in the dataset.
